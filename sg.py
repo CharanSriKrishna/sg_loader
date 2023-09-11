@@ -5,15 +5,9 @@ import requests
 
 class sg_con:
     def __init__(self):
-        # self.__sg = Shotgun(
-        #     base_url='https://seecubicindia.shotgrid.autodesk.com',
-        #     script_name='api_admin',
-        #     api_key='rcmremmTkwj1ozngvrvbbfg@o'
-        # )
         self.__sg = Shotgun(
             'https://samit.shotgunstudio.com',
-            'HDD',
-            'qd-sskykmwvqe3vPibwqadswo'
+            # password
         )
 
     def get_projects(self, user_name=getpass.getuser()):
