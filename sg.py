@@ -16,17 +16,13 @@ class sg_con:
             'qd-sskykmwvqe3vPibwqadswo'
         )
 
-    def get_seq(self, shot_id):
-        shot = self.__sg.find_one("Shot", [["id", "is", int(shot_id)]], ["sg_sequence"])
-        return shot.get('sg_sequence')['name']
-
     def get_projects(self, user_name=getpass.getuser()):
         """
         Get the projects that the user is part of
         :param user_name:name of the user
         :return:
         """
-        user_id = self.get_shotgun_user_id(user_name)['id']
+        user_id = self.get_user(user_name)['id']
         proj_fields = ['name', 'id']
         proj_filter = [
             ["is_demo", "is_not", True],
@@ -37,9 +33,9 @@ class sg_con:
         projects = self.__sg.find('Project', proj_filter, proj_fields)
         return projects
 
-    def get_shotgun_user_id(self, user_name=getpass.getuser()):
+    def get_user(self, user_name):
         """
-
+        Get the sg userid based on the username given
         :param user_name:
         :return:
         """
@@ -50,6 +46,11 @@ class sg_con:
         return self.__sg.find_one('HumanUser', filers, fields)
 
     def get_shots(self, project_id):
+        """
+        Get all the shots based on the project id mentioned
+        :param project_id:
+        :return:
+        """
         s_fields = ['code', 'id']
         s_filter = [
             ['project', 'is', {'type': 'Project', 'id': project_id}]
@@ -57,13 +58,20 @@ class sg_con:
         shots = self.__sg.find('Shot', s_filter, s_fields)
         return shots
 
-    def get_tasks(self, shot_id, user_id):
+    def get_tasks(self, shot_id, user_name):
+        """
+        Get all the tasks that are assigned to a shot
+        :param shot_id:
+        :param user_id:
+        :return:
+        """
         t_fields = ['step', 'id']
-        if user_id is None:
+        if user_name is None:
             t_filter = [
                 ["entity", "is", {"type": "Shot", "id": shot_id}],
             ]
         else:
+            user_id = self.get_user(user_name)['id']
             t_filter = [
                 ["entity", "is", {"type": "Shot", "id": shot_id}],
                 ["task_assignees", "in", {"type": "HumanUser", "id": user_id}],
@@ -71,31 +79,34 @@ class sg_con:
         tasks = self.__sg.find('Task', t_filter, t_fields)
         return tasks
 
+    def get_seq(self, shot_id):
+        """
+        find the sequence the shot belongs to
+        :param shot_id:
+        :return:
+        """
+        shot = self.__sg.find_one("Shot", [["id", "is", int(shot_id)]], ["sg_sequence"])
+        return shot.get('sg_sequence')['name']
+
     def get_publishes(self, task_id):
+        """
+        Get all the publish files for the specific task
+        :param task_id:
+        :return:
+        """
         p_fields = ['id', 'name', 'code', 'path']
         p_filter = [
             ["task", 'is', {"type": "Task", "id": int(task_id)}],
         ]
         publishes = self.__sg.find('PublishedFile', p_filter, p_fields)
-        print(publishes)
+        #print(publishes)
         return publishes
 
-    def get_user(self, user_name):
-        filers = [
-            ['login', 'is', user_name]
-        ]
-        fields = ['id']
-        return self.__sg.find_one('HumanUser', filers, fields)
-
-    def find_publish(self, pub_id, path):
-        published_file = self.__sg.find_one("PublishedFile", [["id", "is", pub_id]], fields=["path", "name", 'code'])
-
-        download_url = published_file['path']['url']
-
-        # Specify the local path where you want to save the downloaded file
-        local_path = os.path.join(path, published_file["code"])
-        return [local_path, download_url]
-
-    def get_publish(self, pub_id):
+    def get_publish_file(self, pub_id):
+        """
+        Find the specific published file with the id
+        :param pub_id:
+        :return:
+        """
         published_file = self.__sg.find_one("PublishedFile", [["id", "is", pub_id]], fields=["path", "name", 'code'])
         return published_file
